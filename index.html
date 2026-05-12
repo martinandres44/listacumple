@@ -25,31 +25,17 @@
   .total-block { min-width: 70px; }
   .total-num { font-size: 40px; font-weight: 600; line-height: 1; font-family: 'DM Mono', monospace; letter-spacing: -1px; transition: color 0.2s; }
   .total-label { font-size: 11px; color: var(--text2); margin-top: 1px; }
-  .bar-section { flex: 1; min-width: 160px; }
-  .bar-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
-  .bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; background: var(--green); }
-  .diff-pill { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 20px; background: var(--green-bg); color: var(--green-text); font-family: 'DM Mono', monospace; white-space: nowrap; }
-  .diff-pill.over  { background: var(--red-bg); color: var(--red); }
-  .diff-pill.exact { background: var(--blue-bg); color: var(--blue-text); }
   .conf-badge { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   .conf-badge strong { font-family: 'DM Mono', monospace; color: var(--green); font-size: 15px; }
 
   /* TOOLBAR */
-  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  .url-input { flex: 1; min-width: 220px; font-family: 'DM Mono', monospace; font-size: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; outline: none; transition: border-color 0.15s; }
-  .url-input:focus { border-color: var(--green); }
-  .url-input::placeholder { color: var(--text3); }
-  .btn { display: flex; align-items: center; gap: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text); transition: all 0.15s; white-space: nowrap; }
-  .btn:hover { background: var(--surface2); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .btn-primary { background: var(--green); color: white; border-color: var(--green); }
-  .btn-primary:hover { opacity: 0.88; background: var(--green); }
-  .status-msg { font-size: 12px; padding: 6px 12px; border-radius: 6px; background: var(--surface2); color: var(--text2); display: none; }
-  .status-msg.show { display: block; }
-  .status-msg.ok  { background: var(--green-bg); color: var(--green-text); }
-  .status-msg.err { background: var(--red-bg); color: var(--red); }
+  .sync-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
+  .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+  .sync-dot.ok  { background: var(--green); }
+  .sync-dot.err { background: var(--red); }
+  .sync-label { font-size: 12px; color: var(--text2); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   /* GRID */
   .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -129,25 +115,12 @@
     <div class="total-num" id="total-num">29</div>
     <div class="total-label">en lista</div>
   </div>
-  <div class="bar-section">
-    <div class="bar-meta"><span id="bar-label">29 / 60</span><span>objetivo: 60</span></div>
-    <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
-  </div>
-  <div class="diff-pill" id="diff-pill">faltan 31</div>
   <div class="conf-badge">✓ <strong id="conf-count">0</strong> confirmados</div>
 </div>
 
-<div class="toolbar">
-  <input class="url-input" id="script-url" type="text" placeholder="URL del Apps Script deployment…"/>
-  <button class="btn" id="btn-load" onclick="loadFromSheet()">
-    <svg viewBox="0 0 16 16"><polyline points="1,10 8,3 15,10"/><line x1="8" y1="3" x2="8" y2="15"/></svg>
-    Cargar
-  </button>
-  <button class="btn btn-primary" id="btn-save" onclick="saveToSheet()">
-    <svg viewBox="0 0 16 16"><path d="M13 15H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h8l4 4v10a2 2 0 0 1-2 2z"/><polyline points="5,15 5,9 11,9 11,15"/><polyline points="5,3 10,3"/></svg>
-    Guardar en Sheets
-  </button>
-  <span class="status-msg" id="status-msg"></span>
+<div class="sync-bar">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span class="sync-label" id="sync-label">Cargando estado desde Sheets…</span>
 </div>
 
 <div class="groups-grid" id="groups-grid"></div>
@@ -158,8 +131,6 @@
 </div>
 
 <script>
-const URL_KEY = "armador_script_url";
-
 const GROUPS = [
   {id:1,mandatory:true, name:"Familia",members:["Martin","Flor","Pili","Tomy","Anita","Guille","Agos","Zeke","Fernando","Ariel","Lorena","Fernanda","Novio"]},
   {id:2,mandatory:true, name:"Cole Tomy",members:["Ariel","Cris","Juan M","Naty","Juan C","Silvia","Juan L","Betty","Ivan","Carolina","Eugenia","Dante","Martin C","Claudia","Gonzalo","Mariela"]},
@@ -205,19 +176,8 @@ function confirmedCount() {
 
 // ---- summary ----
 function updateSummary() {
-  const t=totalCount(), goal=60, c=confirmedCount();
-  const el=document.getElementById('total-num');
-  el.textContent=t;
-  el.style.color=t>goal?'var(--red)':t===goal?'var(--blue)':'var(--text)';
-  document.getElementById('bar-label').textContent=t+' / '+goal;
-  const pct=Math.min(100,Math.round(t/goal*100));
-  const fill=document.getElementById('bar-fill');
-  fill.style.width=pct+'%';
-  fill.style.background=t>goal?'var(--red)':t===goal?'var(--blue)':'var(--green)';
-  const diff=goal-t;
-  const pill=document.getElementById('diff-pill');
-  pill.className='diff-pill'+(diff<0?' over':diff===0?' exact':'');
-  pill.textContent=diff>0?'faltan '+diff:diff===0?'¡exacto! 🎯':(diff*-1)+' de más';
+  const t=totalCount(), c=confirmedCount();
+  document.getElementById('total-num').textContent=t;
   document.getElementById('conf-count').textContent=c;
 }
 
@@ -245,17 +205,15 @@ function toggleGroup(gid) {
   const g=GROUPS.find(x=>x.id===gid); if(g.mandatory) return;
   if(S.active.has(gid)) { S.active.delete(gid); S.open.delete(gid); S.removed[gid].clear(); S.added[gid]=[]; S.confirmed[gid].clear(); }
   else S.active.add(gid);
-  render();
+  render(); scheduleSave();
 }
 function toggleOpen(gid) { S.open.has(gid)?S.open.delete(gid):S.open.add(gid); render(); }
 function toggleConfOrig(gid,idx) {
   S.confirmed[gid].has(idx)?S.confirmed[gid].delete(idx):S.confirmed[gid].add(idx);
-  render();
-  const url=getUrl(); if(url) syncConf(url, GROUPS.find(x=>x.id===gid).members[idx], gid);
+  render(); scheduleSave();
 }
 function toggleConfAdded(gid,ai) {
-  S.added[gid][ai].confirmado=!S.added[gid][ai].confirmado; render();
-  const url=getUrl(); if(url) syncConf(url, S.added[gid][ai].nombre, gid);
+  S.added[gid][ai].confirmado=!S.added[gid][ai].confirmado; render(); scheduleSave();
 }
 async function syncConf(url,nombre,gid) {
   try { await fetch(url,{method:'POST',body:JSON.stringify({action:'toggle_confirmed',nombre,grupo:gid})}); } catch(e){}
@@ -312,20 +270,20 @@ function render() {
         const a=el.dataset.action, gid=parseInt(el.dataset.gid);
         if(a==='toggle')       toggleGroup(gid);
         else if(a==='expand')  toggleOpen(gid);
-        else if(a==='remove')  { S.removed[gid].add(parseInt(el.dataset.idx)); render(); }
-        else if(a==='restore') { S.removed[gid].delete(parseInt(el.dataset.idx)); render(); }
-        else if(a==='remove-added') { S.added[gid].splice(parseInt(el.dataset.aidx),1); render(); }
+        else if(a==='remove')  { S.removed[gid].add(parseInt(el.dataset.idx)); render(); scheduleSave(); }
+        else if(a==='restore') { S.removed[gid].delete(parseInt(el.dataset.idx)); render(); scheduleSave(); }
+        else if(a==='remove-added') { S.added[gid].splice(parseInt(el.dataset.aidx),1); render(); scheduleSave(); }
         else if(a==='conf-orig')    toggleConfOrig(gid,parseInt(el.dataset.idx));
         else if(a==='conf-added')   toggleConfAdded(gid,parseInt(el.dataset.aidx));
         else if(a==='add-member') {
           const inp=card.querySelector(`.add-input[data-gid="${gid}"]`);
           const name=inp?inp.value.trim():'';
-          if(name){ S.added[gid].push({nombre:name,confirmado:false}); render(); }
+          if(name){ S.added[gid].push({nombre:name,confirmado:false}); render(); scheduleSave(); }
         }
       });
     });
     card.querySelectorAll('.add-input').forEach(inp=>{
-      inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const gid=parseInt(inp.dataset.gid); const name=inp.value.trim(); if(name){ S.added[gid].push({nombre:name,confirmado:false}); render(); } } });
+      inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const gid=parseInt(inp.dataset.gid); const name=inp.value.trim(); if(name){ S.added[gid].push({nombre:name,confirmado:false}); render(); scheduleSave(); } } });
       inp.addEventListener('click',e=>e.stopPropagation());
     });
 
@@ -334,77 +292,89 @@ function render() {
 }
 
 // ---- Sheets sync ----
-function getUrl() {
-  const v=document.getElementById('script-url').value.trim();
-  if(v) localStorage.setItem(URL_KEY,v);
-  return localStorage.getItem(URL_KEY)||'';
-}
-function setStatus(msg,type) {
-  const el=document.getElementById('status-msg');
-  el.textContent=msg; el.className='status-msg show '+(type||'');
-  if(type==='ok') setTimeout(()=>{ el.className='status-msg'; },3500);
-}
-function buildPayload() {
-  const personas=[];
-  GROUPS.forEach(g=>{
-    g.members.forEach((m,i)=>{
-      personas.push({grupo_id:g.id,grupo_nombre:g.name,nombre:m,tipo:'original',incluido:S.active.has(g.id)&&!S.removed[g.id].has(i),confirmado:S.confirmed[g.id].has(i)});
-    });
-    S.added[g.id].forEach(a=>{
-      personas.push({grupo_id:g.id,grupo_nombre:g.name,nombre:a.nombre,tipo:'agregado',incluido:S.active.has(g.id),confirmado:a.confirmado});
-    });
-  });
-  const grupos=GROUPS.map(g=>({id:g.id,name:g.name,active:S.active.has(g.id),mandatory:g.mandatory}));
-  return {action:'save',data:{personas,grupos,total_incluidos:totalCount(),confirmados:confirmedCount()}};
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcUutK8V1IhPs7ubl50ljwl77oaUtAFn8LsPbO3MGQzKa4lpfyVz3wd5vDHkHXjbaJ/exec";
+
+let syncTimer = null;
+let isSyncing = false;
+
+function setSyncStatus(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + state;
+  lbl.textContent = msg;
 }
 
-async function saveToSheet() {
-  const url=getUrl(); if(!url){ setStatus('Primero pegá la URL del Apps Script','err'); return; }
-  const btn=document.getElementById('btn-save');
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
-  setStatus('Guardando…','');
+function scheduleSave() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(autoSave, 1200); // debounce 1.2s
+}
+
+function buildPayload() {
+  const personas = [];
+  GROUPS.forEach(g => {
+    g.members.forEach((m, i) => {
+      personas.push({grupo_id:g.id, grupo_nombre:g.name, nombre:m, tipo:'original',
+        incluido: S.active.has(g.id) && !S.removed[g.id].has(i),
+        confirmado: S.confirmed[g.id].has(i)});
+    });
+    S.added[g.id].forEach(a => {
+      personas.push({grupo_id:g.id, grupo_nombre:g.name, nombre:a.nombre, tipo:'agregado',
+        incluido: S.active.has(g.id), confirmado: a.confirmado});
+    });
+  });
+  const grupos = GROUPS.map(g => ({id:g.id, name:g.name, active:S.active.has(g.id), mandatory:g.mandatory}));
+  return {action:'save', data:{personas, grupos, total_incluidos:totalCount(), confirmados:confirmedCount()}};
+}
+
+async function autoSave() {
+  if (isSyncing) { scheduleSave(); return; }
+  isSyncing = true;
+  setSyncStatus('syncing', 'Guardando…');
   try {
-    const res=await fetch(url,{method:'POST',body:JSON.stringify(buildPayload())});
-    const data=await res.json();
-    if(data.ok) setStatus('✓ Guardado — '+data.timestamp,'ok');
-    else         setStatus('Error: '+data.error,'err');
-  } catch(e) { setStatus('Error de conexión: '+e.message,'err'); }
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M13 15H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h8l4 4v10a2 2 0 0 1-2 2z"/><polyline points="5,15 5,9 11,9 11,15"/><polyline points="5,3 10,3"/></svg> Guardar en Sheets';
+    const res  = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(buildPayload())});
+    const data = await res.json();
+    if (data.ok) setSyncStatus('ok', 'Guardado · ' + data.timestamp);
+    else         setSyncStatus('err', 'Error al guardar: ' + data.error);
+  } catch(e) {
+    setSyncStatus('err', 'Sin conexión — ' + e.message);
+  }
+  isSyncing = false;
 }
 
 async function loadFromSheet() {
-  const url=getUrl(); if(!url){ setStatus('Primero pegá la URL del Apps Script','err'); return; }
-  const btn=document.getElementById('btn-load');
-  btn.disabled=true; btn.textContent='Cargando…'; setStatus('Cargando desde Sheets…','');
+  setSyncStatus('syncing', 'Cargando estado desde Sheets…');
   try {
-    const res=await fetch(url+'?action=load');
-    const data=await res.json();
-    if(!data.ok){ setStatus('Error: '+data.error,'err'); return; }
+    const res  = await fetch(SCRIPT_URL + '?action=load');
+    const data = await res.json();
+    if (!data.ok) { setSyncStatus('err', 'Error al cargar: ' + data.error); return; }
 
-    if(data.grupos&&data.grupos.length){ S.active.clear(); data.grupos.forEach(g=>{ if(g.active) S.active.add(g.id); }); }
-    GROUPS.forEach(g=>{ S.removed[g.id].clear(); S.added[g.id]=[]; S.confirmed[g.id].clear(); });
-    if(data.personas&&data.personas.length){
-      data.personas.filter(p=>p.tipo==='original').forEach(p=>{
-        const g=GROUPS.find(x=>x.id===p.grupo_id); if(!g) return;
-        const idx=g.members.indexOf(p.nombre); if(idx===-1) return;
-        if(!p.incluido) S.removed[p.grupo_id].add(idx);
-        if(p.confirmado) S.confirmed[p.grupo_id].add(idx);
+    if (data.grupos && data.grupos.length) {
+      S.active.clear();
+      data.grupos.forEach(g => { if (g.active) S.active.add(g.id); });
+    }
+    GROUPS.forEach(g => { S.removed[g.id].clear(); S.added[g.id]=[]; S.confirmed[g.id].clear(); });
+    if (data.personas && data.personas.length) {
+      data.personas.filter(p => p.tipo==='original').forEach(p => {
+        const g = GROUPS.find(x => x.id===p.grupo_id); if (!g) return;
+        const idx = g.members.indexOf(p.nombre); if (idx===-1) return;
+        if (!p.incluido)  S.removed[p.grupo_id].add(idx);
+        if (p.confirmado) S.confirmed[p.grupo_id].add(idx);
       });
-      data.personas.filter(p=>p.tipo==='agregado').forEach(p=>{
-        const g=GROUPS.find(x=>x.id===p.grupo_id); if(!g) return;
-        S.added[p.grupo_id].push({nombre:p.nombre,confirmado:p.confirmado});
+      data.personas.filter(p => p.tipo==='agregado').forEach(p => {
+        const g = GROUPS.find(x => x.id===p.grupo_id); if (!g) return;
+        S.added[p.grupo_id].push({nombre:p.nombre, confirmado:p.confirmado});
       });
     }
-    render(); setStatus('✓ Estado cargado correctamente','ok');
-  } catch(e){ setStatus('Error: '+e.message,'err'); }
-  btn.disabled=false; btn.textContent='Cargar';
+    render();
+    setSyncStatus('ok', 'Estado cargado correctamente');
+  } catch(e) {
+    setSyncStatus('err', 'Error al cargar: ' + e.message);
+    render(); // render con estado vacío de todas formas
+  }
 }
 
-// init
-const saved=localStorage.getItem(URL_KEY);
-if(saved) document.getElementById('script-url').value=saved;
-render();
+// init — cargar desde Sheets al abrir
+loadFromSheet();
 </script>
 </body>
 </html>
