@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Armador de grupos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F6F2; --surface: #FFFFFF; --surface2: #F0EFE9;
+    --border: #E2E0D8; --border2: #CCCAB8;
+    --text: #1A1917; --text2: #6B6960; --text3: #A8A69C;
+    --green: #1D9E75; --green-bg: #E1F5EE; --green-text: #085041;
+    --blue: #2E6FD8; --blue-bg: #E6EFFE; --blue-text: #1A3F85;
+    --red: #D84040; --red-bg: #FEECEC;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 32px 24px 80px; }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+
+  /* STICKY BAR */
+  .sticky-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; position: sticky; top: 12px; z-index: 10; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .total-block { min-width: 70px; }
+  .total-num { font-size: 40px; font-weight: 600; line-height: 1; font-family: 'DM Mono', monospace; letter-spacing: -1px; transition: color 0.2s; }
+  .total-label { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .bar-section { flex: 1; min-width: 160px; }
+  .bar-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; background: var(--green); }
+  .diff-pill { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 20px; background: var(--green-bg); color: var(--green-text); font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .diff-pill.over  { background: var(--red-bg); color: var(--red); }
+  .diff-pill.exact { background: var(--blue-bg); color: var(--blue-text); }
+  .conf-badge { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .conf-badge strong { font-family: 'DM Mono', monospace; color: var(--green); font-size: 15px; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .url-input { flex: 1; min-width: 220px; font-family: 'DM Mono', monospace; font-size: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; outline: none; transition: border-color 0.15s; }
+  .url-input:focus { border-color: var(--green); }
+  .url-input::placeholder { color: var(--text3); }
+  .btn { display: flex; align-items: center; gap: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text); transition: all 0.15s; white-space: nowrap; }
+  .btn:hover { background: var(--surface2); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-primary { background: var(--green); color: white; border-color: var(--green); }
+  .btn-primary:hover { opacity: 0.88; background: var(--green); }
+  .status-msg { font-size: 12px; padding: 6px 12px; border-radius: 6px; background: var(--surface2); color: var(--text2); display: none; }
+  .status-msg.show { display: block; }
+  .status-msg.ok  { background: var(--green-bg); color: var(--green-text); }
+  .status-msg.err { background: var(--red-bg); color: var(--red); }
+
+  /* GRID */
+  .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.15s, opacity 0.15s; }
+  .group-card.active    { border-color: var(--green); border-width: 1.5px; }
+  .group-card.mandatory { border-color: var(--blue);  border-width: 1.5px; }
+  .group-card.inactive  { opacity: 0.5; }
+
+  .group-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .check-btn { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; padding: 0; }
+  .check-btn:hover:not(.lock) { border-color: var(--green); }
+  .check-btn.on   { background: var(--green); border-color: var(--green); }
+  .check-btn.lock { background: var(--blue);  border-color: var(--blue); cursor: default; }
+  .check-btn svg  { width: 11px; height: 11px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .group-name-area { flex: 1; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .group-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+  .right-meta { display: flex; align-items: center; gap: 6px; }
+  .badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .badge-mand { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-inc  { background: var(--green-bg); color: var(--green-text); }
+  .chevron { width: 16px; height: 16px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .group-subline { font-size: 12px; color: var(--text2); padding: 0 14px 10px; border-bottom: 1px solid var(--border); }
+  .detail-wrap { display: none; }
+  .detail-wrap.open { display: block; }
+  .members-list { padding: 6px 14px; }
+
+  .member-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); gap: 6px; }
+  .member-row:last-child { border-bottom: none; }
+  .member-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+
+  /* Confirm checkbox */
+  .conf-chk { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; padding: 0; }
+  .conf-chk:hover { border-color: var(--green); }
+  .conf-chk.yes { background: var(--green); border-color: var(--green); }
+  .conf-chk svg { width: 10px; height: 10px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .member-name { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member-name.removed   { text-decoration: line-through; color: var(--text3); }
+  .member-name.confirmed { color: var(--green-text); font-weight: 500; }
+  .member-name.isnew     { font-style: italic; }
+
+  .action-btn { background: none; border: none; cursor: pointer; color: var(--text3); display: flex; align-items: center; padding: 2px 4px; border-radius: 4px; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+  .action-btn:hover         { color: var(--red); background: var(--red-bg); }
+  .action-btn.restore:hover { color: var(--green); background: var(--green-bg); }
+  .action-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .add-row { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-top: 1px dashed var(--border); }
+  .add-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; outline: none; transition: border-color 0.15s; }
+  .add-input::placeholder { color: var(--text3); }
+  .add-input:focus { border-color: var(--green); background: var(--surface); }
+  .add-btn { background: var(--green); border: none; border-radius: 6px; color: white; cursor: pointer; display: flex; align-items: center; padding: 5px 8px; transition: opacity 0.15s; flex-shrink: 0; }
+  .add-btn:hover { opacity: 0.85; }
+  .add-btn svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .excl-section { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .excl-title { font-size: 12px; color: var(--text2); margin-bottom: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+  .excl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; padding: 4px 12px; border-radius: 20px; background: var(--surface); color: var(--text2); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: border-color 0.15s, color 0.15s; }
+  .chip:hover { border-color: var(--green); color: var(--green); }
+  .chip svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .chip-grp { font-size: 10px; color: var(--text3); }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+</style>
+</head>
+<body>
+
+<h1>Armador de grupos</h1>
+<p class="subtitle">Seleccioná grupos, agregá o quitá personas, tildá confirmados. Todo se guarda en Google Sheets.</p>
+
+<div class="sticky-bar">
+  <div class="total-block">
+    <div class="total-num" id="total-num">29</div>
+    <div class="total-label">en lista</div>
+  </div>
+  <div class="bar-section">
+    <div class="bar-meta"><span id="bar-label">29 / 60</span><span>objetivo: 60</span></div>
+    <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+  </div>
+  <div class="diff-pill" id="diff-pill">faltan 31</div>
+  <div class="conf-badge">✓ <strong id="conf-count">0</strong> confirmados</div>
+</div>
+
+<div class="toolbar">
+  <input class="url-input" id="script-url" type="text" placeholder="URL del Apps Script deployment…"/>
+  <button class="btn" id="btn-load" onclick="loadFromSheet()">
+    <svg viewBox="0 0 16 16"><polyline points="1,10 8,3 15,10"/><line x1="8" y1="3" x2="8" y2="15"/></svg>
+    Cargar
+  </button>
+  <button class="btn btn-primary" id="btn-save" onclick="saveToSheet()">
+    <svg viewBox="0 0 16 16"><path d="M13 15H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h8l4 4v10a2 2 0 0 1-2 2z"/><polyline points="5,15 5,9 11,9 11,15"/><polyline points="5,3 10,3"/></svg>
+    Guardar en Sheets
+  </button>
+  <span class="status-msg" id="status-msg"></span>
+</div>
+
+<div class="groups-grid" id="groups-grid"></div>
+
+<div class="excl-section" id="excl-section" style="display:none">
+  <div class="excl-title">Personas removidas — clic para restaurar</div>
+  <div class="excl-chips" id="excl-chips"></div>
+</div>
+
+<script>
+const URL_KEY = "armador_script_url";
+
+const GROUPS = [
+  {id:1,mandatory:true, name:"Familia",members:["Martin","Flor","Pili","Tomy","Anita","Guille","Agos","Zeke","Fernando","Ariel","Lorena","Fernanda","Novio"]},
+  {id:2,mandatory:true, name:"Cole Tomy",members:["Ariel","Cris","Juan M","Naty","Juan C","Silvia","Juan L","Betty","Ivan","Carolina","Eugenia","Dante","Martin C","Claudia","Gonzalo","Mariela"]},
+  {id:3,mandatory:false,name:"Olivos",members:["Mono","Mary","Nico","Julieta","Pancho","Ines","Gabriel Rector","Mujer Gabriel","Lorena","Esteban","Mariana","Mauro","Laura","Marido"]},
+  {id:4,mandatory:false,name:"BDS",members:["Ana","Javi","Valeria","Carlos","Barbie","Fede","Hernan","Ale","Kari","Luis","Kari","Alfred","Sonia"]},
+  {id:5,mandatory:false,name:"Cole Bauti",members:["Guille","Romi","Julian","Carolina","Christian","Cecilia","Gonzalo","Aixa","Monica","Eduardo"]},
+  {id:6,mandatory:false,name:"GEBA",members:["Pichi","Lila","Nicolas","Mujer Nicolas","Pablo","Silvina","Javi","Mujer Javi","Ariel","Guillermina"]},
+  {id:7,mandatory:false,name:"Aboy",members:["Jorgito","Mujer Jorgito","Juani","Mujer Juani","Nego","Mujer Negro","Augusto"]}
+];
+
+const S = {
+  active:    new Set([1,2]),
+  open:      new Set(),
+  removed:   {},   // gid -> Set<idx>
+  added:     {},   // gid -> [{nombre,confirmado}]
+  confirmed: {}    // gid -> Set<idx>  (original members)
+};
+GROUPS.forEach(g => { S.removed[g.id]=new Set(); S.added[g.id]=[]; S.confirmed[g.id]=new Set(); });
+
+// ---- SVG icons ----
+const IC = {
+  check:   `<svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>`,
+  lock:    `<svg viewBox="0 0 12 12"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V4a2 2 0 0 1 4 0v1"/></svg>`,
+  x:       `<svg viewBox="0 0 14 14"><line x1="3" y1="3" x2="11" y2="11"/><line x1="11" y1="3" x2="3" y2="11"/></svg>`,
+  restore: `<svg viewBox="0 0 14 14"><polyline points="2,8 2,12 6,12"/><path d="M2 12 A6 6 0 1 1 5 5.5"/></svg>`,
+  plus:    `<svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>`
+};
+
+// ---- helpers ----
+function activeCount(gid) {
+  const g = GROUPS.find(x=>x.id===gid);
+  return g.members.filter((_,i)=>!S.removed[gid].has(i)).length + S.added[gid].length;
+}
+function totalCount()  { let t=0; S.active.forEach(gid=>{t+=activeCount(gid);}); return t; }
+function confirmedCount() {
+  let c=0;
+  S.active.forEach(gid=>{
+    S.confirmed[gid].forEach(i=>{ if(!S.removed[gid].has(i)) c++; });
+    S.added[gid].forEach(a=>{ if(a.confirmado) c++; });
+  });
+  return c;
+}
+
+// ---- summary ----
+function updateSummary() {
+  const t=totalCount(), goal=60, c=confirmedCount();
+  const el=document.getElementById('total-num');
+  el.textContent=t;
+  el.style.color=t>goal?'var(--red)':t===goal?'var(--blue)':'var(--text)';
+  document.getElementById('bar-label').textContent=t+' / '+goal;
+  const pct=Math.min(100,Math.round(t/goal*100));
+  const fill=document.getElementById('bar-fill');
+  fill.style.width=pct+'%';
+  fill.style.background=t>goal?'var(--red)':t===goal?'var(--blue)':'var(--green)';
+  const diff=goal-t;
+  const pill=document.getElementById('diff-pill');
+  pill.className='diff-pill'+(diff<0?' over':diff===0?' exact':'');
+  pill.textContent=diff>0?'faltan '+diff:diff===0?'¡exacto! 🎯':(diff*-1)+' de más';
+  document.getElementById('conf-count').textContent=c;
+}
+
+// ---- excluded chips ----
+function updateExcluded() {
+  const chips=document.getElementById('excl-chips');
+  const sec=document.getElementById('excl-section');
+  chips.innerHTML=''; let any=false;
+  GROUPS.forEach(g=>{
+    if(!S.active.has(g.id)) return;
+    S.removed[g.id].forEach(idx=>{
+      any=true;
+      const chip=document.createElement('div');
+      chip.className='chip';
+      chip.innerHTML=IC.restore+g.members[idx]+' <span class="chip-grp">'+g.name+'</span>';
+      chip.onclick=()=>{ S.removed[g.id].delete(idx); render(); };
+      chips.appendChild(chip);
+    });
+  });
+  sec.style.display=any?'block':'none';
+}
+
+// ---- actions ----
+function toggleGroup(gid) {
+  const g=GROUPS.find(x=>x.id===gid); if(g.mandatory) return;
+  if(S.active.has(gid)) { S.active.delete(gid); S.open.delete(gid); S.removed[gid].clear(); S.added[gid]=[]; S.confirmed[gid].clear(); }
+  else S.active.add(gid);
+  render();
+}
+function toggleOpen(gid) { S.open.has(gid)?S.open.delete(gid):S.open.add(gid); render(); }
+function toggleConfOrig(gid,idx) {
+  S.confirmed[gid].has(idx)?S.confirmed[gid].delete(idx):S.confirmed[gid].add(idx);
+  render();
+  const url=getUrl(); if(url) syncConf(url, GROUPS.find(x=>x.id===gid).members[idx], gid);
+}
+function toggleConfAdded(gid,ai) {
+  S.added[gid][ai].confirmado=!S.added[gid][ai].confirmado; render();
+  const url=getUrl(); if(url) syncConf(url, S.added[gid][ai].nombre, gid);
+}
+async function syncConf(url,nombre,gid) {
+  try { await fetch(url,{method:'POST',body:JSON.stringify({action:'toggle_confirmed',nombre,grupo:gid})}); } catch(e){}
+}
+
+// ---- render ----
+function render() {
+  updateSummary(); updateExcluded();
+  const grid=document.getElementById('groups-grid');
+  grid.innerHTML='';
+
+  GROUPS.forEach(g=>{
+    const isActive=S.active.has(g.id), isOpen=S.open.has(g.id);
+    const cnt=isActive?activeCount(g.id):g.members.length;
+    const remCnt=S.removed[g.id].size;
+
+    const card=document.createElement('div');
+    card.className='group-card'+(g.mandatory?' mandatory':isActive?' active':' inactive');
+
+    const checkClass=g.mandatory?'lock':isActive?'on':'';
+    const checkIcon=g.mandatory?IC.lock:isActive?IC.check:'';
+    const badge=g.mandatory?'<span class="badge badge-mand">obligatorio</span>':isActive?'<span class="badge badge-inc">incluido</span>':'';
+
+    const origHTML=g.members.map((m,i)=>{
+      if(S.removed[g.id].has(i)) return `<div class="member-row"><div class="member-left"><span class="member-name removed">${m}</span></div>${isActive?`<button class="action-btn restore" data-action="restore" data-gid="${g.id}" data-idx="${i}">${IC.restore}</button>`:''}</div>`;
+      const conf=S.confirmed[g.id].has(i);
+      return `<div class="member-row"><div class="member-left">${isActive?`<button class="conf-chk ${conf?'yes':''}" data-action="conf-orig" data-gid="${g.id}" data-idx="${i}">${conf?IC.check:''}</button>`:''}<span class="member-name ${conf?'confirmed':''}">${m}</span></div>${isActive?`<button class="action-btn" data-action="remove" data-gid="${g.id}" data-idx="${i}">${IC.x}</button>`:''}</div>`;
+    }).join('');
+
+    const addedHTML=S.added[g.id].map((a,ai)=>{
+      const conf=a.confirmado;
+      return `<div class="member-row"><div class="member-left">${isActive?`<button class="conf-chk ${conf?'yes':''}" data-action="conf-added" data-gid="${g.id}" data-aidx="${ai}">${conf?IC.check:''}</button>`:''}<span class="member-name isnew ${conf?'confirmed':''}">${a.nombre} <span style="font-size:10px;color:var(--green);opacity:0.7">+nuevo</span></span></div>${isActive?`<button class="action-btn" data-action="remove-added" data-gid="${g.id}" data-aidx="${ai}">${IC.x}</button>`:''}</div>`;
+    }).join('');
+
+    const addRow=isActive?`<div class="add-row"><input class="add-input" type="text" placeholder="Agregar persona…" data-gid="${g.id}" maxlength="40"/><button class="add-btn" data-action="add-member" data-gid="${g.id}">${IC.plus}</button></div>`:'';
+
+    card.innerHTML=`
+      <div class="group-header">
+        <button class="check-btn ${checkClass}" data-action="toggle" data-gid="${g.id}">${checkIcon}</button>
+        <div class="group-name-area" data-action="expand" data-gid="${g.id}">
+          <span class="group-name">${g.name}</span>
+          <div class="right-meta">${badge}<svg class="chevron${isOpen?' open':''}" viewBox="0 0 16 16"><polyline points="4,6 8,10 12,6" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+      </div>
+      <div class="group-subline">${cnt} persona${cnt!==1?'s':''}${isActive&&remCnt>0?' · '+remCnt+' removida'+(remCnt!==1?'s':''):''}</div>
+      <div class="detail-wrap${isOpen?' open':''}">
+        <div class="members-list">${origHTML}${addedHTML}</div>
+        ${addRow}
+      </div>`;
+
+    card.querySelectorAll('[data-action]').forEach(el=>{
+      el.addEventListener('click',e=>{
+        e.stopPropagation();
+        const a=el.dataset.action, gid=parseInt(el.dataset.gid);
+        if(a==='toggle')       toggleGroup(gid);
+        else if(a==='expand')  toggleOpen(gid);
+        else if(a==='remove')  { S.removed[gid].add(parseInt(el.dataset.idx)); render(); }
+        else if(a==='restore') { S.removed[gid].delete(parseInt(el.dataset.idx)); render(); }
+        else if(a==='remove-added') { S.added[gid].splice(parseInt(el.dataset.aidx),1); render(); }
+        else if(a==='conf-orig')    toggleConfOrig(gid,parseInt(el.dataset.idx));
+        else if(a==='conf-added')   toggleConfAdded(gid,parseInt(el.dataset.aidx));
+        else if(a==='add-member') {
+          const inp=card.querySelector(`.add-input[data-gid="${gid}"]`);
+          const name=inp?inp.value.trim():'';
+          if(name){ S.added[gid].push({nombre:name,confirmado:false}); render(); }
+        }
+      });
+    });
+    card.querySelectorAll('.add-input').forEach(inp=>{
+      inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const gid=parseInt(inp.dataset.gid); const name=inp.value.trim(); if(name){ S.added[gid].push({nombre:name,confirmado:false}); render(); } } });
+      inp.addEventListener('click',e=>e.stopPropagation());
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// ---- Sheets sync ----
+function getUrl() {
+  const v=document.getElementById('script-url').value.trim();
+  if(v) localStorage.setItem(URL_KEY,v);
+  return localStorage.getItem(URL_KEY)||'';
+}
+function setStatus(msg,type) {
+  const el=document.getElementById('status-msg');
+  el.textContent=msg; el.className='status-msg show '+(type||'');
+  if(type==='ok') setTimeout(()=>{ el.className='status-msg'; },3500);
+}
+function buildPayload() {
+  const personas=[];
+  GROUPS.forEach(g=>{
+    g.members.forEach((m,i)=>{
+      personas.push({grupo_id:g.id,grupo_nombre:g.name,nombre:m,tipo:'original',incluido:S.active.has(g.id)&&!S.removed[g.id].has(i),confirmado:S.confirmed[g.id].has(i)});
+    });
+    S.added[g.id].forEach(a=>{
+      personas.push({grupo_id:g.id,grupo_nombre:g.name,nombre:a.nombre,tipo:'agregado',incluido:S.active.has(g.id),confirmado:a.confirmado});
+    });
+  });
+  const grupos=GROUPS.map(g=>({id:g.id,name:g.name,active:S.active.has(g.id),mandatory:g.mandatory}));
+  return {action:'save',data:{personas,grupos,total_incluidos:totalCount(),confirmados:confirmedCount()}};
+}
+
+async function saveToSheet() {
+  const url=getUrl(); if(!url){ setStatus('Primero pegá la URL del Apps Script','err'); return; }
+  const btn=document.getElementById('btn-save');
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
+  setStatus('Guardando…','');
+  try {
+    const res=await fetch(url,{method:'POST',body:JSON.stringify(buildPayload())});
+    const data=await res.json();
+    if(data.ok) setStatus('✓ Guardado — '+data.timestamp,'ok');
+    else         setStatus('Error: '+data.error,'err');
+  } catch(e) { setStatus('Error de conexión: '+e.message,'err'); }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M13 15H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h8l4 4v10a2 2 0 0 1-2 2z"/><polyline points="5,15 5,9 11,9 11,15"/><polyline points="5,3 10,3"/></svg> Guardar en Sheets';
+}
+
+async function loadFromSheet() {
+  const url=getUrl(); if(!url){ setStatus('Primero pegá la URL del Apps Script','err'); return; }
+  const btn=document.getElementById('btn-load');
+  btn.disabled=true; btn.textContent='Cargando…'; setStatus('Cargando desde Sheets…','');
+  try {
+    const res=await fetch(url+'?action=load');
+    const data=await res.json();
+    if(!data.ok){ setStatus('Error: '+data.error,'err'); return; }
+
+    if(data.grupos&&data.grupos.length){ S.active.clear(); data.grupos.forEach(g=>{ if(g.active) S.active.add(g.id); }); }
+    GROUPS.forEach(g=>{ S.removed[g.id].clear(); S.added[g.id]=[]; S.confirmed[g.id].clear(); });
+    if(data.personas&&data.personas.length){
+      data.personas.filter(p=>p.tipo==='original').forEach(p=>{
+        const g=GROUPS.find(x=>x.id===p.grupo_id); if(!g) return;
+        const idx=g.members.indexOf(p.nombre); if(idx===-1) return;
+        if(!p.incluido) S.removed[p.grupo_id].add(idx);
+        if(p.confirmado) S.confirmed[p.grupo_id].add(idx);
+      });
+      data.personas.filter(p=>p.tipo==='agregado').forEach(p=>{
+        const g=GROUPS.find(x=>x.id===p.grupo_id); if(!g) return;
+        S.added[p.grupo_id].push({nombre:p.nombre,confirmado:p.confirmado});
+      });
+    }
+    render(); setStatus('✓ Estado cargado correctamente','ok');
+  } catch(e){ setStatus('Error: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='Cargar';
+}
+
+// init
+const saved=localStorage.getItem(URL_KEY);
+if(saved) document.getElementById('script-url').value=saved;
+render();
+</script>
+</body>
+</html>
