@@ -251,6 +251,10 @@ function render() {
 
     const addRow=isActive?`<div class="add-row"><input class="add-input" type="text" placeholder="Agregar persona…" data-gid="${g.id}" maxlength="40"/><button class="add-btn" data-action="add-member" data-gid="${g.id}">${IC.plus}</button></div>`:'';
 
+    const confCnt = isActive
+      ? [...S.confirmed[g.id]].filter(i => !S.removed[g.id].has(i)).length + S.added[g.id].filter(a=>a.confirmado).length
+      : 0;
+
     card.innerHTML=`
       <div class="group-header">
         <button class="check-btn ${checkClass}" data-action="toggle" data-gid="${g.id}">${checkIcon}</button>
@@ -259,7 +263,7 @@ function render() {
           <div class="right-meta">${badge}<svg class="chevron${isOpen?' open':''}" viewBox="0 0 16 16"><polyline points="4,6 8,10 12,6" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         </div>
       </div>
-      <div class="group-subline">${cnt} persona${cnt!==1?'s':''}${isActive&&remCnt>0?' · '+remCnt+' removida'+(remCnt!==1?'s':''):''}</div>
+      <div class="group-subline">${cnt} persona${cnt!==1?'s':''}${isActive&&confCnt>0?` · <span style="color:var(--green-text);font-weight:500">${confCnt} confirmada${confCnt!==1?'s':''}</span>`:''}${isActive&&remCnt>0?' · '+remCnt+' removida'+(remCnt!==1?'s':''):''}</div>
       <div class="detail-wrap${isOpen?' open':''}">
         <div class="members-list">${origHTML}${addedHTML}</div>
         ${addRow}
