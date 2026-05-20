@@ -103,6 +103,57 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+  /* ---- AMBIENTES ---- */
+  .ambientes-section { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .ambientes-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .ambientes-title { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .ambientes-subtitle { font-size: 13px; color: var(--text2); }
+  .ambientes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+  .ambiente-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .ambiente-header { padding: 12px 14px 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ambiente-name { font-size: 14px; font-weight: 600; }
+  .ambiente-count { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
+
+  .cap-display { font-size: 12px; font-family: 'DM Mono', monospace; padding: 3px 9px; border-radius: 12px; cursor: pointer; transition: opacity 0.15s; font-weight: 500; }
+  .cap-display:hover { opacity: 0.85; }
+  .cap-display.ok   { background: var(--green-bg); color: var(--green-text); }
+  .cap-display.full { background: var(--blue-bg);  color: var(--blue-text); }
+  .cap-display.over { background: var(--red-bg);   color: var(--red); }
+
+  .cap-set-btn { background: transparent; border: 1px dashed var(--border2); border-radius: 12px; padding: 3px 10px; font-size: 11px; color: var(--text2); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .cap-set-btn:hover { border-color: var(--green); color: var(--green); }
+
+  .cap-bar { height: 4px; background: var(--surface2); }
+  .cap-bar-fill { height: 100%; transition: width 0.3s, background 0.3s; }
+
+  .ambiente-slots { padding: 8px 14px; min-height: 40px; }
+  .slot-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); gap: 6px; }
+  .slot-row:last-child { border-bottom: none; }
+  .slot-info { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+  .slot-name { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slot-origen { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: var(--blue-bg); color: var(--blue-text); white-space: nowrap; flex-shrink: 0; }
+  .slot-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .slot-move { font-family: 'DM Sans', sans-serif; font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 4px; outline: none; cursor: pointer; color: var(--text2); max-width: 30px; }
+  .slot-move:hover { border-color: var(--green); color: var(--green); }
+  .slot-move:focus { max-width: 130px; }
+  .slot-remove { background: none; border: none; cursor: pointer; color: var(--text3); padding: 2px 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+  .slot-remove:hover { color: var(--red); background: var(--red-bg); }
+  .slot-remove svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .ambiente-add { padding: 8px 14px; border-top: 1px dashed var(--border); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .amb-add-input { flex: 1; min-width: 100px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; outline: none; transition: border-color 0.15s; }
+  .amb-add-input:focus { border-color: var(--green); background: var(--surface); }
+  .amb-add-input::placeholder { color: var(--text3); }
+  .amb-add-btn { background: var(--green); border: none; border-radius: 6px; color: white; cursor: pointer; padding: 5px 8px; display: flex; align-items: center; transition: opacity 0.15s; flex-shrink: 0; }
+  .amb-add-btn:hover { opacity: 0.85; }
+  .amb-add-btn svg { width: 13px; height: 13px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .amb-group-select { font-family: 'DM Sans', sans-serif; font-size: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; outline: none; color: var(--text); cursor: pointer; max-width: 130px; }
+  .amb-group-select:focus { border-color: var(--blue); }
+
+  .empty-slot { font-size: 12px; color: var(--text3); font-style: italic; padding: 4px 0; }
 </style>
 </head>
 <body>
@@ -130,15 +181,26 @@
   <div class="excl-chips" id="excl-chips"></div>
 </div>
 
+<!-- AMBIENTES -->
+<div class="ambientes-section">
+  <div class="ambientes-header">
+    <div>
+      <div class="ambientes-title">Distribución por ambientes</div>
+      <div class="ambientes-subtitle">Asigná grupos o personas a cada espacio del lugar</div>
+    </div>
+  </div>
+  <div class="ambientes-grid" id="ambientes-grid"></div>
+</div>
+
 <script>
 const GROUPS = [
-  {id:1,mandatory:true, name:"Familia",members:["Martin","Flor","Pili","Tomy","Anita","Guille","Agos","Zeke","Fernando","Ariel","Lorena","Fernanda","Novio"]},
+  {id:1,mandatory:true, name:"Familia",members:["Martin","Flor","Pili","Tomy","Anita","Guille","Agos","Zeke","Fernanda","Novio"]},
   {id:2,mandatory:true, name:"Cole Tomy",members:["Ariel","Cris","Juan M","Naty","Juan C","Silvia","Juan L","Betty","Ivan","Carolina","Eugenia","Dante","Martin C","Claudia","Gonzalo","Mariela"]},
   {id:3,mandatory:false,name:"Olivos",members:["Mono","Mary","Nico","Julieta","Pancho","Ines","Gabriel Rector","Mujer Gabriel","Lorena","Esteban","Mariana","Mauro","Laura","Marido"]},
   {id:4,mandatory:false,name:"BDS",members:["Ana","Javi","Valeria","Carlos","Barbie","Fede","Hernan","Ale","Kari","Luis","Kari","Alfred","Sonia"]},
   {id:5,mandatory:false,name:"Cole Bauti",members:["Guille","Romi","Julian","Carolina","Christian","Cecilia","Gonzalo","Aixa","Monica","Eduardo"]},
   {id:6,mandatory:false,name:"GEBA",members:["Pichi","Lila","Nicolas","Mujer Nicolas","Pablo","Silvina","Javi","Mujer Javi","Ariel","Guillermina"]},
-  {id:7,mandatory:false,name:"Aboy",members:["Jorgito","Mujer Jorgito","Juani","Mujer Juani","Nego","Mujer Negro","Augusto"]},
+  {id:7,mandatory:false,name:"Aboy",members:["Jorgito","Mujer Jorgito","Juani","Mujer Juani","Nego","Mujer Negro","Augusto","Fernando","Ariel","Lorena"]},
   {id:8,mandatory:false,name:"Coca",members:["Francisco","Flora","Jesica","Marido Jesica","Julieta","Marido Julieta","Jony","Mujer Jony","Fer","Mujer Fer"]}
 ];
 
@@ -294,6 +356,8 @@ function render() {
 
     grid.appendChild(card);
   });
+  // actualizar conteos de ambientes cuando cambia el estado
+  if (typeof renderAmbientes === 'function') renderAmbientes();
 }
 
 // ---- Sheets sync ----
@@ -380,6 +444,214 @@ async function loadFromSheet() {
 
 // init — cargar desde Sheets al abrir
 loadFromSheet();
+
+// ===================== AMBIENTES =====================
+const AMBIENTES = [
+  { id: 'recepcion',   name: 'Recepción',         emoji: '🚪' },
+  { id: 'primer',      name: 'Primer Ambiente',   emoji: '🪑' },
+  { id: 'segundo',     name: 'Segundo Ambiente',  emoji: '🪑' },
+  { id: 'barra1',      name: 'Barra 1',           emoji: '🍺' },
+  { id: 'barra2',      name: 'Barra 2',           emoji: '🍺' },
+  { id: 'pista',       name: 'Pista de Baile',    emoji: '🕺' },
+];
+
+// AMB[ambId] = [{nombre, origen}]  origen: nombre del grupo o 'manual'
+const AMB = {};
+const CAP = {}; // capacidad por ambiente
+AMBIENTES.forEach(a => {
+  const raw = JSON.parse(localStorage.getItem('amb_'+a.id)||'[]');
+  AMB[a.id] = raw.filter(s => s && (s.nombre || s.label)).map(s => {
+    if (s.nombre) return s;
+    return { nombre: s.label, origen: s.type==='group' ? (s.label||'manual') : 'manual' };
+  });
+  CAP[a.id] = parseInt(localStorage.getItem('cap_'+a.id)) || 0;
+});
+
+function saveCap(ambId) {
+  if (CAP[ambId] > 0) localStorage.setItem('cap_'+ambId, CAP[ambId]);
+  else localStorage.removeItem('cap_'+ambId);
+}
+
+function saveAmb(ambId) {
+  localStorage.setItem('amb_'+ambId, JSON.stringify(AMB[ambId]));
+}
+function saveAllAmb() {
+  AMBIENTES.forEach(a => saveAmb(a.id));
+}
+
+function ambCount(ambId) { return AMB[ambId].length; }
+
+// Devuelve qué personas del grupo NO están todavía asignadas a ningún ambiente
+function unassignedFromGroup(gid) {
+  const g = GROUPS.find(x => x.id === gid);
+  if (!g) return [];
+  const members = g.members.filter((_, i) => !S.removed[gid].has(i));
+  const added = S.added[gid].map(a => a.nombre);
+  const all = [...members, ...added];
+  const assigned = new Set();
+  AMBIENTES.forEach(a => { AMB[a.id].forEach(p => { if (p.origen === g.name) assigned.add(p.nombre); }); });
+  return all.filter(n => !assigned.has(n));
+}
+
+function addGroupToAmbiente(ambId, gid) {
+  const g = GROUPS.find(x => x.id === gid);
+  if (!g) return;
+  const toAdd = unassignedFromGroup(gid);
+  toAdd.forEach(nombre => AMB[ambId].push({nombre, origen: g.name}));
+  saveAmb(ambId);
+}
+
+function movePerson(fromAmbId, idx, toAmbId) {
+  if (fromAmbId === toAmbId) return;
+  const [person] = AMB[fromAmbId].splice(idx, 1);
+  AMB[toAmbId].push(person);
+  saveAmb(fromAmbId); saveAmb(toAmbId);
+}
+
+function renderAmbientes() {
+  const grid = document.getElementById('ambientes-grid');
+  grid.innerHTML = '';
+
+  AMBIENTES.forEach(amb => {
+    const slots = AMB[amb.id];
+    const cnt = ambCount(amb.id);
+
+    const card = document.createElement('div');
+    card.className = 'ambiente-card';
+
+    // build list of personas con select para mover
+    const slotsHTML = slots.length === 0
+      ? '<div class="empty-slot">Sin asignaciones todavía</div>'
+      : slots.map((p, si) => {
+          const origenBadge = p.origen && p.origen !== 'manual'
+            ? `<span class="slot-origen">${p.origen}</span>`
+            : '';
+          const moveOpts = AMBIENTES
+            .filter(a => a.id !== amb.id)
+            .map(a => `<option value="${a.id}">${a.name}</option>`)
+            .join('');
+          return `<div class="slot-row">
+            <div class="slot-info">
+              <span class="slot-name">${p.nombre}</span>
+              ${origenBadge}
+            </div>
+            <div class="slot-actions">
+              <select class="slot-move" data-ambid="${amb.id}" data-si="${si}" title="Mover a otro ambiente">
+                <option value="">↗</option>
+                ${moveOpts}
+              </select>
+              <button class="slot-remove" data-ambid="${amb.id}" data-si="${si}" title="Quitar">
+                <svg viewBox="0 0 14 14"><line x1="3" y1="3" x2="11" y2="11"/><line x1="11" y1="3" x2="3" y2="11"/></svg>
+              </button>
+            </div>
+          </div>`;
+        }).join('');
+
+    // group options: solo activos, y solo si tienen al menos 1 sin asignar
+    const groupOpts = GROUPS
+      .filter(g => S.active.has(g.id) && unassignedFromGroup(g.id).length > 0)
+      .map(g => `<option value="${g.id}">${g.name} (${unassignedFromGroup(g.id).length})</option>`)
+      .join('');
+
+    const cap = CAP[amb.id];
+    let capStatus = '';
+    let capClass = '';
+    if (cap > 0) {
+      if (cnt > cap) { capStatus = `${cnt}/${cap}`; capClass = 'over'; }
+      else if (cnt === cap) { capStatus = `${cnt}/${cap}`; capClass = 'full'; }
+      else { capStatus = `${cnt}/${cap}`; capClass = 'ok'; }
+    }
+    const capPct = cap > 0 ? Math.min(100, Math.round(cnt/cap*100)) : 0;
+    const capBarColor = cnt > cap ? 'var(--red)' : cnt === cap ? 'var(--blue)' : 'var(--green)';
+
+    card.innerHTML = `
+      <div class="ambiente-header">
+        <span class="ambiente-name">${amb.emoji} ${amb.name}</span>
+        ${cap > 0
+          ? `<span class="cap-display ${capClass}" data-ambid="${amb.id}" title="Clic para cambiar capacidad">${capStatus}</span>`
+          : `<button class="cap-set-btn" data-ambid="${amb.id}" title="Definir capacidad">${cnt>0?cnt+' pers · ':''}+ cap.</button>`
+        }
+      </div>
+      ${cap > 0 ? `<div class="cap-bar"><div class="cap-bar-fill" style="width:${capPct}%;background:${capBarColor}"></div></div>` : ''}
+      <div class="ambiente-slots">${slotsHTML}</div>
+      <div class="ambiente-add">
+        <select class="amb-group-select" data-ambid="${amb.id}" title="Agregar todas las personas de un grupo">
+          <option value="">+ Grupo…</option>
+          ${groupOpts}
+        </select>
+        <input class="amb-add-input" type="text" placeholder="Persona o nota…" data-ambid="${amb.id}" maxlength="50"/>
+        <button class="amb-add-btn" data-ambid="${amb.id}" title="Agregar">
+          <svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        </button>
+      </div>`;
+
+    // remove slot
+    card.querySelectorAll('.slot-remove').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const aid = btn.dataset.ambid, si = parseInt(btn.dataset.si);
+        AMB[aid].splice(si, 1);
+        saveAmb(aid);
+        renderAmbientes();
+      });
+    });
+
+    // capacity edit
+    const editCap = (aid) => {
+      const current = CAP[aid] || '';
+      const val = prompt(`Capacidad máxima de ${amb.name}\n(dejá vacío para quitar):`, current);
+      if (val === null) return; // cancelado
+      const num = parseInt(val);
+      CAP[aid] = isNaN(num) || num <= 0 ? 0 : num;
+      saveCap(aid);
+      renderAmbientes();
+    };
+    const capBtn = card.querySelector('.cap-set-btn');
+    if (capBtn) capBtn.addEventListener('click', e => { e.stopPropagation(); editCap(capBtn.dataset.ambid); });
+    const capDisp = card.querySelector('.cap-display');
+    if (capDisp) capDisp.addEventListener('click', e => { e.stopPropagation(); editCap(capDisp.dataset.ambid); });
+
+    // move slot
+    card.querySelectorAll('.slot-move').forEach(sel => {
+      sel.addEventListener('change', e => {
+        e.stopPropagation();
+        const fromId = sel.dataset.ambid, si = parseInt(sel.dataset.si);
+        const toId = sel.value;
+        if (!toId) return;
+        movePerson(fromId, si, toId);
+        renderAmbientes();
+      });
+    });
+
+    // add full group (expanded to people)
+    card.querySelector('.amb-group-select').addEventListener('change', e => {
+      const aid = e.target.dataset.ambid;
+      const gid = parseInt(e.target.value);
+      if (!gid) return;
+      addGroupToAmbiente(aid, gid);
+      e.target.value='';
+      renderAmbientes();
+    });
+
+    // add person/note via input
+    const addInput = card.querySelector('.amb-add-input');
+    const doAdd = () => {
+      const aid = addInput.dataset.ambid;
+      const val = addInput.value.trim();
+      if (!val) return;
+      AMB[aid].push({nombre: val, origen: 'manual'});
+      saveAmb(aid); addInput.value='';
+      renderAmbientes();
+    };
+    card.querySelector('.amb-add-btn').addEventListener('click', doAdd);
+    addInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); doAdd(); } });
+    addInput.addEventListener('click', e => e.stopPropagation());
+
+    grid.appendChild(card);
+  });
+}
+
+renderAmbientes();
 </script>
 </body>
 </html>
